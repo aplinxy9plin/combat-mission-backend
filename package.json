@@ -1,0 +1,43 @@
+{
+  "name": "colizeum-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/wolframdeus/colizeum-backend.git",
+  "author": "vdkfrost <vlad.kibenko2@hotmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "start": "dotenv -e .env node build/index.js",
+    "deploy": "yarn install && yarn build && yarn start",
+    "tunnel": "ngrok http --region eu 9000",
+    "seed": "dotenv -e .env ts-node deploy/index.ts"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.19.2",
+    "@typescript-eslint/parser": "^2.19.2",
+    "eslint": "^6.8.0",
+    "ngrok": "^3.2.7",
+    "nodemon": "^2.0.2"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.6",
+    "@types/express": "^4.17.2",
+    "@types/gm": "^1.18.7",
+    "@types/mongodb": "^3.3.16",
+    "@types/socket.io": "^2.1.4",
+    "axios": "^0.19.2",
+    "chalk": "^3.0.0",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.0",
+    "dayjs": "^1.8.21",
+    "dotenv": "^8.2.0",
+    "dotenv-cli": "^3.1.0",
+    "express": "^4.17.1",
+    "gm": "^1.23.1",
+    "guid": "^0.0.12",
+    "mongodb": "^3.5.3",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "watch": [
+    "src",
+    ".env"
+  ],
+  "execMap": {
+    "ts": "dotenv -e .env ts-node"
+  }
+}
