@@ -1,11 +1,11 @@
-import {Achievement, Collection, IAchievement, Profile, User} from '../../db';
+import {Achievement, Collection, IAchievement, Profile, PromoCode, PromoCodeType, User} from '../../db';
 import Database from '../../db/Database';
 import dayjs from "dayjs";
-import {formatUserWithPromo} from '../promocode-service';
+import {formatUserWithPromo, generatePromoCode} from '../promocode-service';
 import {
   checkIfUserIsBorderGuard,
   checkIfUserLogsInSomeDayInRow,
-  checkIfUserReceivedUpgradeByTotalVisits,
+  checkIfUserReceivedUpgradeByTotalVisits, getUserRanks,
 } from "./utils";
 import * as utils from '../utils';
 import {decrypt} from "../../http/crypto";
@@ -218,4 +218,52 @@ export const getUser = async (db: Database, userId: number) => {
       rank: true,
     },
   });
+};
+
+/**
+ * Регистрируем пользователя
+ * @param db
+ * @param userId
+ * @param avatarUrl
+ */
+export const registerUser = async (db: Database, userId: number, avatarUrl: string) => {
+  const usersCollection = db.collection(Collection.Users);
+  let foundUser = await usersCollection.findOne({id: userId});
+
+  let promoCode: PromoCode | null = null;
+
+  if (!foundUser) {
+    const ranks = await db.collection(Collection.Ranks).find({}).toArray();
+    const {rank, nextRank} = getUserRanks(0, ranks);
+
+    // Даем промокод за первое посещение приложения.
+    promoCode = generatePromoCode(PromoCodeType.Discount20VipFrom2Hours);
+
+    foundUser = {
+      achievementsReceived: [],
+      achievementsProgress: {
+        [Achievement.Visitor]: 1,
+        [Achievement.Warrior]: 0,
+      },
+      activatedChecks: [],
+      avatarUrl,
+      id: userId,
+      points: 100,
+      promoCodes: [promoCode],
+      lastFixedVisitDate: new Date().getTime(),
+      visitsInRow: 0,
+    };
+    if (rank) {
+      foundUser.rank = rank;
+    }
+    if (nextRank) {
+      foundUser.nextRank = nextRank;
+    }
+    await usersCollection.insertOne(foundUser);
+  }
+
+  return {
+    user: foundUser,
+    newbiePromoReceived: true,
+  };
 };
