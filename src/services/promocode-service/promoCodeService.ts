@@ -1,7 +1,7 @@
-import {
+import Database, {
   PromoCodeType,
   PromoCode,
-  UserPromoCode, User,
+  UserPromoCode, User, Collection,
 } from '../../db';
 import dayjs from 'dayjs';
 
@@ -53,4 +53,50 @@ export const formatUserWithPromo = (user: User) => {
       .filter(c => now.isBefore(c.expiresAt))
       .map(formatPromoCode),
   }
+};
+
+/**
+ * Активировать промокод пользователя
+ * @param db
+ * @param userId
+ * @param promoCodeId
+ */
+export const openPromoCode = async (db: Database, userId: number, promoCodeId: string) => {
+  const foundUser = await db.collection(Collection.Users).findOne({id: userId});
+
+  if (!foundUser) {
+    return {
+      error: {
+        code: 404,
+        message: 'Пользователь не найден',
+      }
+    };
+  }
+  const promo = foundUser.promoCodes.find(p => p.id === promoCodeId);
+
+  if (!promo) {
+    return {
+      error: {
+        code: 404,
+        message: 'Промокод не найден',
+      }
+    };
+  }
+  if (!promo.openedAt) {
+    const index = foundUser.promoCodes.indexOf(promo);
+    const now = dayjs();
+    promo.openedAt = now.toDate();
+    promo.expiresAt = now.add(1, 'day').toDate();
+
+    await db.collection(Collection.Users).updateOne(
+      {id: userId},
+      {
+        $set: {
+          [`promoCodes.${index}.openedAt`]: promo.openedAt,
+          [`promoCodes.${index}.expiresAt`]: promo.expiresAt,
+        },
+      },
+    );
+  }
+  return formatPromoCode(promo);
 };
