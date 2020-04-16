@@ -1,6 +1,6 @@
 export type InputProfile = {
   age: number;
-  about?: string;
+  about: string | null;
   city: string;
   clubId: number;
   gamesIds: number[];

@@ -82,7 +82,7 @@ export type Stage = IdTitlePair;
 
 export interface Profile {
   age: number;
-  about?: string;
+  about: string | null;
   city: string;
   clubId: number;
   games: Game[];
@@ -93,17 +93,17 @@ export interface Profile {
 export interface User {
   achievementsReceived: IAchievement[];
   achievementsProgress: {
-    [achievementId in Achievement]?: number;
+    [achievementId in Achievement]: number | null;
   };
   activatedChecks: string[];
   avatarUrl: string | null;
   id: number;
   promoCodes: PromoCode[];
-  profile?: Profile;
+  profile: Profile | null;
   points: number;
-  rank?: Rank;
+  rank: Rank | null;
   lastFixedVisitDate: number;
-  nextRank?: Rank;
+  nextRank: Rank | null;
   visitsInRow: number;
 }
 
@@ -122,8 +122,8 @@ export interface IAchievement {
   iconImageUrl: string;
   title: string;
   description: string;
-  points?: number[];
-  rankPoints?: number[];
+  points: number[] | null;
+  rankPoints: number[] | null;
   storyImageUrls: string[];
   snippetImageUrls: string[];
 }
