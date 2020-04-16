@@ -1,4 +1,4 @@
-import {IAchievement} from '../../db';
+import Database, {Collection, IAchievement} from '../../db';
 
 interface ICheckAchievementResult {
   addToReceivedRequired: boolean;
@@ -45,4 +45,8 @@ export const checkAchievement = (
   }
 
   return {addToReceivedRequired, levelUpgrade, pointsToAdd};
+};
+
+export const getAchievements = async (db: Database) => {
+  return await db.collection(Collection.Achievements).find().toArray()
 };
