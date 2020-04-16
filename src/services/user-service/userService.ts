@@ -267,3 +267,18 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
     newbiePromoReceived: true,
   };
 };
+
+/**
+ * Получаем справочники и прочие данные для анкеты
+ * @param db
+ */
+export const getProfileMeta = async (db: Database) => {
+  const gamesCollection = db.collection(Collection.Games);
+  const stagesCollection = db.collection(Collection.Stages);
+
+  const [games, stages] = await Promise.all([
+    gamesCollection.find().toArray(),
+    stagesCollection.find().toArray(),
+  ]);
+  return {games, stages};
+};
