@@ -114,3 +114,62 @@ export const deleteUserFromTeam = async (db: Database, userId: number) => {
     data: true,
   }
 };
+
+/**
+ * Ищем напарников
+ * @param db
+ * @param city
+ * @param gamesIds
+ * @param userId
+ */
+export const searchMates = async (
+  db: Database,
+  city: string,
+  gamesIds: number[],
+  userId: number
+) => {
+  const usersCollection = db.collection(Collection.Users);
+
+  // Находим пользователей по запросу.
+  const users = await usersCollection
+    .find({
+      id: {$ne: userId},
+      'profile.city': city,
+      'profile.games.id': {$in: gamesIds},
+    })
+    .project({
+      achievementsReceived: true,
+      avatarUrl: true,
+      id: true,
+      profile: true,
+      rank: true,
+    })
+    .toArray();
+
+  // Если пользователи не найдены, возвращаем пустой массив.
+  if (users.length === 0) {
+    return [];
+  }
+
+  // Находим команды пользователей и оставляем только тех, кто находится не в
+  // полных командах.
+  const teamsCollection = db.collection(Collection.Teams);
+  const teams = await teamsCollection
+    .find({
+      'users.id': {
+        $in: users.map(u => u.id),
+      },
+    })
+    .limit(users.length)
+    .project({'users.id': true})
+    .toArray();
+
+  return users.filter(u => {
+    const team = teams.find(t => t.users.some(tu => tu.id === u.id));
+
+    // Берем только те команды где менее 5 человек и нас в ней нет.
+    return team
+      ? (team.users.length < 5 && !team.users.some(u => u.id === userId))
+      : true;
+  });
+};
