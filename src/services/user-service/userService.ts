@@ -1,4 +1,4 @@
-import {Achievement, Collection, IAchievement, PromoCodeType, User} from '../../db';
+import {Achievement, Collection, IAchievement, Profile, PromoCodeType, User} from '../../db';
 import Database from '../../db/Database';
 import dayjs from "dayjs";
 import {formatUserWithPromo} from '../promocode-service';
@@ -10,6 +10,7 @@ import {
 import * as utils from '../utils';
 import {decrypt} from "../../http/crypto";
 import {checkAchievement} from "../achievement-service";
+import {InputProfile} from "../../temp-bridge";
 
 export const getCurrentUserInfo = async (db: Database, userId: number) => {
   const usersCollection = db.collection(Collection.Users);
@@ -134,4 +135,42 @@ export const activateCheck = async (check: string, db: Database, userId: number)
       },
     };
   }
+};
+
+export const saveProfile = async (profile: InputProfile, db: Database, userId: number) => {
+  const [games, stages] = await Promise.all([
+    db.collection(Collection.Games).find({}).toArray(),
+    db.collection(Collection.Stages).find({}).toArray(),
+  ]);
+  const foundGames = games.filter(g => profile.gamesIds.includes(g.id));
+  const foundStage = stages.find(s => s.id === profile.stageId);
+
+  if (foundGames.length === 0 || !foundStage) {
+    return {
+      error: {
+        code: 400,
+        message: 'Некорректные данные',
+      }
+    };
+  }
+
+  const userProfile: Profile = {
+    age: profile.age,
+    about: profile.about,
+    city: profile.city,
+    clubId: profile.clubId,
+    games: foundGames,
+    playTime: profile.playTime % 48,
+    stage: foundStage,
+  };
+  // Обновляем профиль.
+  await db.collection(Collection.Users).updateOne({id: userId}, {$set: {userProfile}});
+
+  // Возвращаем информацию о пользователе с профилем.
+  const foundUser = await db.collection(Collection.Users).findOne(
+    {id: userId},
+    {projection: {profile: true}},
+  );
+
+  return foundUser ? foundUser.profile : {};
 };
