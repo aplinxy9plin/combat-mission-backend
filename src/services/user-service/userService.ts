@@ -196,3 +196,15 @@ export const deleteProfile = async (db: Database, userId: number) => {
   await db.collection(Collection.Users).updateOne({id: userId}, {$unset: {profile: ''}});
   return true;
 };
+
+/**
+ * Находим команду, в которой состоит пользователь
+ * @param db
+ * @param userId
+ */
+export const getUserTeam = async (db: Database, userId: number) => {
+  const team = await db.collection(Collection.Teams).findOne({
+    'users.id': userId,
+  });
+  return team || null;
+};
