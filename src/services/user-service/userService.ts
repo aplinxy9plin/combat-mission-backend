@@ -1,15 +1,14 @@
-import {Achievement, Collection, IAchievement, Profile, PromoCodeType, User} from '../../db';
+import {Achievement, Collection, IAchievement, Profile, User} from '../../db';
 import Database from '../../db/Database';
 import dayjs from "dayjs";
 import {formatUserWithPromo} from '../promocode-service';
 import {
-  checkIfUserReceivedUpgradeByTotalVisits,
-  checkIfUserLogsInSomeDayInRow,
   checkIfUserIsBorderGuard,
+  checkIfUserLogsInSomeDayInRow,
+  checkIfUserReceivedUpgradeByTotalVisits,
 } from "./utils";
 import * as utils from '../utils';
 import {decrypt} from "../../http/crypto";
-import {checkAchievement} from "../achievement-service";
 import {InputProfile} from "../../temp-bridge";
 
 export const getCurrentUserInfo = async (db: Database, userId: number) => {
@@ -207,4 +206,16 @@ export const getUserTeam = async (db: Database, userId: number) => {
     'users.id': userId,
   });
   return team || null;
+};
+
+export const getUser = async (db: Database, userId: number) => {
+  return await db.collection(Collection.Users).findOne({id: userId}, {
+    projection: {
+      achievementsReceived: true,
+      avatarUrl: true,
+      id: true,
+      profile: true,
+      rank: true,
+    },
+  });
 };
