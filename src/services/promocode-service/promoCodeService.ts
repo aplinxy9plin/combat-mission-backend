@@ -2,7 +2,7 @@ import {
   PromoCodeType,
   PromoCode,
   UserPromoCode, User,
-} from './db';
+} from '../../db';
 import dayjs from 'dayjs';
 
 const titleMap: Record<PromoCodeType, string> = {
@@ -13,7 +13,7 @@ const titleMap: Record<PromoCodeType, string> = {
 /**
  * Генерирует промокод указанного типа.
  */
-export function generatePromoCode(type: PromoCodeType): PromoCode {
+export const generatePromoCode = (type: PromoCodeType): PromoCode => {
   return {
     id: Math.random().toString(16).slice(-8),
     type,
@@ -22,28 +22,28 @@ export function generatePromoCode(type: PromoCodeType): PromoCode {
     openedAt: null,
     expiresAt: dayjs().add(7, 'day').toDate(),
   }
-}
+};
 
 /**
  * Форматирует код для вывода пользователю
  * @param {PromoCode} code
  * @returns {UserPromoCode}
  */
-export function formatPromoCode(code: PromoCode): UserPromoCode {
+export const formatPromoCode = (code: PromoCode): UserPromoCode => {
   const {id, type, expiresAt, title, openedAt} = code;
 
   if (openedAt) {
     return code;
   }
   return {id, type, expiresAt, title, openedAt};
-}
+};
 
 /**
  * Форматирует пользователя оставляя только те промокоды, которые сейчас активны
  * @param {User} user
  * @returns {User}
  */
-export function formatUserWithPromo(user: User) {
+export const formatUserWithPromo = (user: User) => {
   const {promoCodes, ...rest} = user;
   const now = dayjs();
 
@@ -53,4 +53,4 @@ export function formatUserWithPromo(user: User) {
       .filter(c => now.isBefore(c.expiresAt))
       .map(formatPromoCode),
   }
-}
+};
