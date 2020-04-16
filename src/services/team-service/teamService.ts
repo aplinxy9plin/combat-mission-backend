@@ -85,3 +85,32 @@ export const tryJoinInTeam = async (db: Database, userId: number, targetUserId: 
   const team = await teamsCollection.insertOne({users: [currentUser, targetUser]});
   return team.ops[0];
 };
+
+/**
+ * Удаляем пользователя из команды
+ * @param db
+ * @param userId
+ */
+export const deleteUserFromTeam = async (db: Database, userId: number) => {
+  const teamsCollection = await db.collection(Collection.Teams);
+  const team = await teamsCollection.findOne({'users.id': userId});
+
+  if (team) {
+    const users = team.users.filter(u => u.id !== userId);
+
+    // Если в команде остался 1 человек, удаляем её.
+    if (users.length === 1) {
+      await teamsCollection.deleteOne({_id: team._id});
+    }
+    // Иначе удаляем пользователя из команды.
+    else {
+      await teamsCollection.updateOne({_id: team._id}, {
+        $pull: {users: {id: userId}},
+      });
+    }
+  }
+
+  return {
+    data: true,
+  }
+};
