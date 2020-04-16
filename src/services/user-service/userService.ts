@@ -1,8 +1,15 @@
-import {Achievement, Collection} from '../../db';
+import {Achievement, Collection, IAchievement, PromoCodeType, User} from '../../db';
 import Database from '../../db/Database';
 import dayjs from "dayjs";
 import {formatUserWithPromo} from '../promocode-service';
-import {checkIfUserReceivedUpgradeByTotalVisits, checkIfUserLogsInSomeDayInRow} from "./utils";
+import {
+  checkIfUserReceivedUpgradeByTotalVisits,
+  checkIfUserLogsInSomeDayInRow,
+  checkIfUserIsBorderGuard,
+} from "./utils";
+import * as utils from '../utils';
+import {decrypt} from "../../http/crypto";
+import {checkAchievement} from "../achievement-service";
 
 export const getCurrentUserInfo = async (db: Database, userId: number) => {
   const usersCollection = db.collection(Collection.Users);
@@ -57,4 +64,74 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
     user: formattedUser,
     receivedPromoCodes,
   };
+};
+
+export const activateCheck = async (check: string, db: Database, userId: number) => {
+  // Расшифровываем чек.
+  const decrypted = decrypt(check);
+
+  try {
+    const content = JSON.parse(decrypted);
+
+    if (utils.isObject(content)! || utils.isString(content.payload)!) {
+      return {
+        error: {
+          code: 400,
+          message: 'К сожалению, это не QR-код Colizeum.',
+          activated: false,
+        }
+      };
+    }
+    const usersCollection = db.collection(Collection.Users);
+    const achievementsCollection = db.collection(Collection.Achievements);
+    const {payload} = content;
+
+    // Пытаемся найти уже активированный чек.
+    const isActivated = await usersCollection.findOne({
+      activatedChecks: {$in: [payload]},
+    });
+
+    if (!!isActivated) {
+      return {
+        error: {
+          code: 400,
+          message: 'Чек уже был активирован.',
+          activated: false,
+        }
+      };
+    }
+
+    // Накидываем очки за пограничника и записываем чек.
+    const [foundUser, achievements] = await Promise.all([
+      usersCollection.findOne({id: userId}),
+      achievementsCollection.find({}).toArray(),
+    ]) as [User | null, IAchievement[]];
+    let promoReceived = false;
+
+    if (foundUser && achievements) {
+      const {BorderGuard} = Achievement;
+      const borderGuardAchievement = achievements.find(a => a.id === BorderGuard);
+
+      if (borderGuardAchievement) {
+        checkIfUserIsBorderGuard(foundUser, borderGuardAchievement, payload, promoReceived);
+        // Ставим метку о том что чек уже активирован.
+        await usersCollection.updateOne({id: userId}, {$set: foundUser});
+      }
+    }
+
+    return {
+      message: 'Чек успешно активирован.',
+      activated: true,
+      user: foundUser ? formatUserWithPromo(foundUser) : null,
+      promoReceived,
+    };
+  } catch (e) {
+    return {
+      error: {
+        code: 400,
+        message: 'К сожалению, это не QR-код Colizeum.',
+        activated: false,
+      },
+    };
+  }
 };

@@ -109,3 +109,31 @@ export const checkIfUserLogsInSomeDayInRow = (
     }
   }
 };
+
+export const checkIfUserIsBorderGuard = (
+  foundUser: User,
+  borderGuardAchievement: IAchievement,
+  payload: string,
+  promoReceived: boolean
+) => {
+  const {BorderGuard} = Achievement;
+  const {Discount20VipFrom2Hours} = PromoCodeType;
+
+  const points = foundUser.achievementsProgress[BorderGuard] || 0;
+  const nextPoints = points + 1;
+  const {
+    addToReceivedRequired, pointsToAdd, levelUpgrade,
+  } = checkAchievement(borderGuardAchievement, points, nextPoints);
+  foundUser.points += pointsToAdd;
+  foundUser.achievementsProgress[BorderGuard] = nextPoints;
+  foundUser.activatedChecks.push(payload);
+
+  if (levelUpgrade) {
+    const promoCode = generatePromoCode(Discount20VipFrom2Hours);
+    promoReceived = true;
+    foundUser.promoCodes.push(promoCode);
+  }
+  if (addToReceivedRequired) {
+    foundUser.achievementsReceived.push(borderGuardAchievement);
+  }
+};
