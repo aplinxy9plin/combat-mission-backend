@@ -67,6 +67,12 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
   };
 };
 
+/**
+ * Активируем чек
+ * @param check
+ * @param db
+ * @param userId
+ */
 export const activateCheck = async (check: string, db: Database, userId: number) => {
   // Расшифровываем чек.
   const decrypted = decrypt(check);
@@ -137,6 +143,12 @@ export const activateCheck = async (check: string, db: Database, userId: number)
   }
 };
 
+/**
+ * Сохраняет профиль пользователя
+ * @param profile
+ * @param db
+ * @param userId
+ */
 export const saveProfile = async (profile: InputProfile, db: Database, userId: number) => {
   const [games, stages] = await Promise.all([
     db.collection(Collection.Games).find({}).toArray(),
@@ -173,4 +185,14 @@ export const saveProfile = async (profile: InputProfile, db: Database, userId: n
   );
 
   return foundUser ? foundUser.profile : {};
+};
+
+/**
+ * Удаляет профиль пользователя
+ * @param db
+ * @param userId
+ */
+export const deleteProfile = async (db: Database, userId: number) => {
+  await db.collection(Collection.Users).updateOne({id: userId}, {$unset: {profile: ''}});
+  return true;
 };
