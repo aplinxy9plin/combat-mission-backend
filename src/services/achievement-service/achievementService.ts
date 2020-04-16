@@ -1,4 +1,4 @@
-import {IAchievement} from './db';
+import {IAchievement} from '../../db';
 
 interface ICheckAchievementResult {
   addToReceivedRequired: boolean;
@@ -11,17 +11,17 @@ interface ICheckAchievementResult {
  * @param points
  * @param currentPoints
  */
-export function getLevel(points: number[], currentPoints: number): number {
+export const getLevel = (points: number[], currentPoints: number): number => {
   return points
     .sort((a, b) => a - b)
     .reduce<number>((acc, p, idx) => p <= currentPoints ? idx + 1 : acc, 0);
-}
+};
 
-export function checkAchievement(
+export const checkAchievement = (
   achievement: IAchievement,
   currentPoints: number,
   nextPoints: number,
-): ICheckAchievementResult {
+): ICheckAchievementResult => {
   const {points, rankPoints} = achievement;
   let addToReceivedRequired = false;
   let levelUpgrade = false;
@@ -45,4 +45,4 @@ export function checkAchievement(
   }
 
   return {addToReceivedRequired, levelUpgrade, pointsToAdd};
-}
+};
