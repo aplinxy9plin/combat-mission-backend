@@ -3,7 +3,7 @@ import {IAchievement} from './db';
 interface ICheckAchievementResult {
   addToReceivedRequired: boolean;
   levelUpgrade: boolean;
-  pointsToAdd: number,
+  pointsToAdd: number;
 }
 
 /**

@@ -1,14 +1,9 @@
-import runServer from './server/runServer';
+import {runHttpServer} from './http';
 import {fork, isMaster} from 'cluster';
 import os from 'os';
-import {createDb, createMongoClient} from './db';
 import config from './config';
 
 (async () => {
-  const client = createMongoClient();
-  await client.connect();
-  const db = createDb(client);
-
   // В дев-версии запускаем 1 поток.
   if (config.env === 'production' && isMaster) {
     // В продакшене запускаем максимальное кол-во, сколько позволяет процессор.
@@ -19,6 +14,6 @@ import config from './config';
       fork();
     }
   } else {
-    await runServer(client, db);
+    await runHttpServer();
   }
 })();

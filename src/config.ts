@@ -1,4 +1,4 @@
-import {IConfig} from './server/types';
+import {Config} from './http/types';
 
 const env = process.env.ENV;
 const encryptionSecret = process.env.ENCRYPTION_SECRET;
@@ -45,8 +45,15 @@ if (!vkAppSecretKey) {
   throw new Error(getErr('VK_APP_SECRET_KEY'));
 }
 
-const config: IConfig = {
-  env, encryptionSecret, port, root, dbHost, dbPort, dbName, staticBaseUrl,
+const config: Config = {
+  env,
+  encryptionSecret,
+  port,
+  root,
+  dbHost,
+  dbPort,
+  dbName,
+  staticBaseUrl,
   vkAppSecretKey,
 };
 

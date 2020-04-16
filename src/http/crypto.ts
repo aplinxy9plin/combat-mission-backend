@@ -6,8 +6,8 @@ import config from '../config';
  * @param text
  */
 export function encrypt(text: string) {
-  let iv = randomBytes(16);
-  let cipher = createCipheriv('aes-256-cbc', Buffer.from(config.encryptionSecret), iv);
+  const iv = randomBytes(16);
+  const cipher = createCipheriv('aes-256-cbc', Buffer.from(config.encryptionSecret), iv);
   let encrypted = cipher.update(text);
 
   encrypted = Buffer.concat([encrypted, cipher.final()]);
@@ -20,10 +20,10 @@ export function encrypt(text: string) {
  * @param text
  */
 export function decrypt(text: string) {
-  let textParts = text.split(':');
-  let iv = Buffer.from(textParts.shift() || '', 'hex');
-  let encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  let decipher = createDecipheriv('aes-256-cbc', Buffer.from(config.encryptionSecret), iv);
+  const textParts = text.split(':');
+  const iv = Buffer.from(textParts.shift() || '', 'hex');
+  const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+  const decipher = createDecipheriv('aes-256-cbc', Buffer.from(config.encryptionSecret), iv);
   let decrypted = decipher.update(encryptedText);
 
   decrypted = Buffer.concat([decrypted, decipher.final()]);
