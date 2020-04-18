@@ -973,7 +973,7 @@ color-name@~1.1.4:
 
 combat-mission-bridge@yungKillaGit/combat-mission-bridge:
   version "1.0.0"
-  resolved "https://codeload.github.com/yungKillaGit/combat-mission-bridge/tar.gz/01db5ae50891d121ed7903cc0c4bbc34b6587fe2"
+  resolved "https://codeload.github.com/yungKillaGit/combat-mission-bridge/tar.gz/7c495e1e36b33a3dd7c8457a4772b8a8fceb6136"
   dependencies:
     gql-types-generator "^1.4.10"
 
@@ -2770,9 +2770,9 @@ resolve-from@^4.0.0:
   integrity sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==
 
 resolve@^1.1.6:
-  version "1.15.1"
-  resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.15.1.tgz#27bdcdeffeaf2d6244b95bb0f9f4b4653451f3e8"
-  integrity sha512-84oo6ZTtoTUpjgNEr5SJyzQhzL72gaRodsSfyxC/AXRvwu0Yse9H8eF9IpGo7b8YetZhlI6v7ZQ6bKBFV/6S7w==
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.16.0.tgz#063dc704fa3413e13ac1d0d1756a7cbfe95dd1a7"
+  integrity sha512-LarL/PIKJvc09k1jaeT4kQb/8/7P+qV4qSnN2K80AES+OHdfZELAKVOBjxsvtToT/uLOfFbvYvKfZmV8cee7nA==
   dependencies:
     path-parse "^1.0.6"
 
