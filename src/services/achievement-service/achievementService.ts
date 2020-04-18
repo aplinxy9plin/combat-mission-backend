@@ -17,6 +17,12 @@ export const getLevel = (points: number[], currentPoints: number): number => {
     .reduce<number>((acc, p, idx) => p <= currentPoints ? idx + 1 : acc, 0);
 };
 
+/**
+ * Проверяем, нужно ли апнуть уровень и если да, то сколько очков нужно добавить
+ * @param achievement
+ * @param currentPoints
+ * @param nextPoints
+ */
 export const checkAchievement = (
   achievement: IAchievement,
   currentPoints: number,
@@ -47,6 +53,10 @@ export const checkAchievement = (
   return {addToReceivedRequired, levelUpgrade, pointsToAdd};
 };
 
+/**
+ * Получаем все достижения
+ * @param db
+ */
 export const getAchievements = async (db: Database) => {
   return await db.collection(Collection.Achievements).find().toArray()
 };

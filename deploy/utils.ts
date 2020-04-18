@@ -1,8 +1,8 @@
-import {Achievement} from '../src/db';
+import {AchievementEnum} from '../src/db';
 import {getUrl} from '../src/utils';
 
 export function getAchievementUrl(
-  id: Achievement,
+  id: AchievementEnum,
   repo: string,
   ext: string,
   level?: number,
@@ -13,7 +13,7 @@ export function getAchievementUrl(
 }
 
 export function generateAssetUrls(
-  id: Achievement,
+  id: AchievementEnum,
   points: number[] | undefined,
 ) {
   return {

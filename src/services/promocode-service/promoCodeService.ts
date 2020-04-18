@@ -98,5 +98,6 @@ export const openPromoCode = async (db: Database, userId: number, promoCodeId: s
       },
     );
   }
-  return formatPromoCode(promo);
+  // TODO
+  return promo;//formatPromoCode(promo);
 };

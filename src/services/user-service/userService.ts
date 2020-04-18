@@ -1,4 +1,4 @@
-import {Achievement, Collection, IAchievement, Profile, PromoCode, PromoCodeType, User} from '../../db';
+import {AchievementEnum, Collection, IAchievement, Profile, PromoCode, PromoCodeType, User} from '../../db';
 import Database from '../../db/Database';
 import dayjs from "dayjs";
 import {formatUserWithPromo, generatePromoCode} from '../promocode-service';
@@ -11,16 +11,27 @@ import * as utils from '../utils';
 import {decrypt} from "../../http/crypto";
 import {InputProfile} from "../../temp-bridge";
 
+/**
+ * Получаем информацию о текущем пользователе, включая полученные промокоды
+ * @param db
+ * @param userId
+ */
 export const getCurrentUserInfo = async (db: Database, userId: number) => {
   const usersCollection = db.collection(Collection.Users);
   const foundUser = await usersCollection.findOne({id: userId});
 
   if (!foundUser) {
-    return {error: 'пользователь не найден'};
+    return {
+      error: {
+        code: 404,
+        message: 'Пользователь не найден.',
+      }
+    }
   }
 
+  // TODO что-то придумать с тем, что массив в graphql не может состоять из union типов
   // Мы выдаем промо в зависимости того, был получен новый уровень или нет.
-  const receivedPromoCodes: Array<'warrior' | 'visitor'> = [];
+  const receivedPromoCodes: string[] | null = [];//: Array<'warrior' | 'visitor'> = [];
 
   const lastFixedVisit = dayjs(foundUser.lastFixedVisitDate);
   const now = dayjs();
@@ -29,7 +40,7 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
   const diff = Math.abs(nowDate - lastDate);
 
   if (diff >= 1) {
-    const {Visitor, Warrior} = Achievement;
+    const {Visitor, Warrior} = AchievementEnum;
     const achievements = await db.collection(Collection.Achievements)
       .find({}).toArray();
     const ranks = await db.collection(Collection.Ranks).find({}).toArray();
@@ -59,9 +70,10 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
 
     await usersCollection.updateOne({id: userId}, {$set: foundUser});
   }
-  const formattedUser = formatUserWithPromo(foundUser);
+  // TODO сделать поле PromoCodes интерфейсом в схеме graphql
+  //const formattedUser = formatUserWithPromo(foundUser);
   return {
-    user: formattedUser,
+    user: foundUser,
     receivedPromoCodes,
   };
 };
@@ -115,7 +127,7 @@ export const activateCheck = async (check: string, db: Database, userId: number)
     let promoReceived = false;
 
     if (foundUser && achievements) {
-      const {BorderGuard} = Achievement;
+      const {BorderGuard} = AchievementEnum;
       const borderGuardAchievement = achievements.find(a => a.id === BorderGuard);
 
       if (borderGuardAchievement) {
@@ -125,10 +137,11 @@ export const activateCheck = async (check: string, db: Database, userId: number)
       }
     }
 
+    // TODO
     return {
       message: 'Чек успешно активирован.',
       activated: true,
-      user: foundUser ? formatUserWithPromo(foundUser) : null,
+      user: foundUser ? foundUser : null,//formatUserWithPromo(foundUser) : null,
       promoReceived,
     };
   } catch (e) {
@@ -183,7 +196,7 @@ export const saveProfile = async (profile: InputProfile, db: Database, userId: n
     {projection: {profile: true}},
   );
 
-  return foundUser ? foundUser.profile : {};
+  return foundUser ? foundUser.profile : null;
 };
 
 /**
@@ -197,7 +210,7 @@ export const deleteProfile = async (db: Database, userId: number) => {
 };
 
 /**
- * Находим команду, в которой состоит пользователь
+ * Получаем команду, в которой состоит пользователь
  * @param db
  * @param userId
  */
@@ -208,8 +221,14 @@ export const getUserTeam = async (db: Database, userId: number) => {
   return team || null;
 };
 
+/**
+ * Получаем пользователя
+ * @param db
+ * @param userId
+ */
 export const getUser = async (db: Database, userId: number) => {
-  return await db.collection(Collection.Users).findOne({id: userId}, {
+  // TODO
+  return await db.collection(Collection.Users).findOne({id: userId}/*, {
     projection: {
       achievementsReceived: true,
       avatarUrl: true,
@@ -217,7 +236,7 @@ export const getUser = async (db: Database, userId: number) => {
       profile: true,
       rank: true,
     },
-  });
+  }*/);
 };
 
 /**
@@ -238,12 +257,16 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
 
     // Даем промокод за первое посещение приложения.
     promoCode = generatePromoCode(PromoCodeType.Discount20VipFrom2Hours);
-
     foundUser = {
       achievementsReceived: [],
       achievementsProgress: {
-        [Achievement.Visitor]: 1,
-        [Achievement.Warrior]: 0,
+        [AchievementEnum.Visitor]: 1,
+        [AchievementEnum.Warrior]: 0,
+        [AchievementEnum.BorderGuard]: null,
+        [AchievementEnum.Correspondent]: null,
+        [AchievementEnum.LivingFullLife]: null,
+        [AchievementEnum.TeamPlayer]: null,
+        [AchievementEnum.RichSoul]: null,
       },
       activatedChecks: [],
       avatarUrl,
@@ -252,6 +275,9 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
       promoCodes: [promoCode],
       lastFixedVisitDate: new Date().getTime(),
       visitsInRow: 0,
+      rank: null,
+      nextRank: null,
+      profile: null,
     };
     if (rank) {
       foundUser.rank = rank;

@@ -1,4 +1,4 @@
-import {Achievement, Collection, IAchievement, PromoCodeType, User} from '../../db';
+import {AchievementEnum, Collection, IAchievement, PromoCodeType, User} from '../../db';
 import {Rank} from "../../db";
 import {checkAchievement} from "../achievement-service";
 import {generatePromoCode} from "../promocode-service";
@@ -30,12 +30,12 @@ export const getUserRanks = (points: number, ranks: Rank[]) => {
 
 export const checkIfUserReceivedUpgradeByTotalVisits = (
   foundUser: User,
-  receivedPromoCodes: Array<'warrior' | 'visitor'>,
+  receivedPromoCodes: string[],//Array<'warrior' | 'visitor'>,
   visitorAchievement: IAchievement,
   ranks: Rank[]
 ) => {
   const {achievementsProgress, achievementsReceived} = foundUser;
-  const {Visitor} = Achievement;
+  const {Visitor} = AchievementEnum;
   const {Discount20VipFrom2Hours} = PromoCodeType;
   const visitsCount = achievementsProgress[Visitor] || 1;
   const nextVisitsCount = visitsCount + 1;
@@ -68,12 +68,12 @@ export const checkIfUserReceivedUpgradeByTotalVisits = (
 
 export const checkIfUserLogsInSomeDayInRow = (
   foundUser: User,
-  receivedPromoCodes: Array<"warrior" | "visitor">,
+  receivedPromoCodes: string[],//Array<"warrior" | "visitor">,
   warriorAchievement: IAchievement | undefined,
   ranks: Rank[]
 ) => {
   const {achievementsProgress, achievementsReceived} = foundUser;
-  const {Warrior} = Achievement;
+  const {Warrior} = AchievementEnum;
   const {Discount20VipFrom2Hours} = PromoCodeType;
   foundUser.visitsInRow++;
   const prevAchievementVisits = achievementsProgress[Warrior] || 0;
@@ -116,7 +116,7 @@ export const checkIfUserIsBorderGuard = (
   payload: string,
   promoReceived: boolean
 ) => {
-  const {BorderGuard} = Achievement;
+  const {BorderGuard} = AchievementEnum;
   const {Discount20VipFrom2Hours} = PromoCodeType;
 
   const points = foundUser.achievementsProgress[BorderGuard] || 0;

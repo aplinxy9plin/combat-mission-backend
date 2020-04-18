@@ -30,7 +30,7 @@ export enum PromoCodeType {
 /**
  * Список существующих достижений.
  */
-export enum Achievement {
+export enum AchievementEnum {
   TeamPlayer,
   Visitor,
   Correspondent,
@@ -92,9 +92,7 @@ export interface Profile {
 
 export interface User {
   achievementsReceived: IAchievement[];
-  achievementsProgress: {
-    [achievementId in Achievement]: number | null;
-  };
+  achievementsProgress: Record<AchievementEnum, number | null>;
   activatedChecks: string[];
   avatarUrl: string | null;
   id: number;
@@ -105,6 +103,14 @@ export interface User {
   lastFixedVisitDate: number;
   nextRank: Rank | null;
   visitsInRow: number;
+}
+
+export interface UserTest {
+  achievementsReceived: IAchievement[];
+  avatarUrl: string | null;
+  id: number;
+  profile: Profile | null;
+  rank: Rank | null;
 }
 
 export interface TeamUser {
@@ -118,7 +124,7 @@ export interface Team {
 }
 
 export interface IAchievement {
-  id: Achievement;
+  id: AchievementEnum;
   iconImageUrl: string;
   title: string;
   description: string;

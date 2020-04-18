@@ -1,7 +1,7 @@
 import {
   createDb,
   createMongoClient,
-  Achievement,
+  AchievementEnum,
   Collection,
 } from '../src/db';
 import {getUrl} from '../src/utils';
@@ -77,40 +77,40 @@ export async function runSeeds() {
   // ДОСТИЖЕНИЯ
   await achievementsCollection.deleteMany({});
   await achievementsCollection.insertMany([{
-    id: Achievement.TeamPlayer,
+    id: AchievementEnum.TeamPlayer,
     title: 'Командный игрок',
     description: 'награда за подбор тиммейтов через приложение',
     points: [5, 25, 50, 75, 100, 125, 150, 175, 200, 225],
     rankPoints: [120, 240, 350, 410, 490, 560, 680, 790, 910, 1000],
   }, {
-    id: Achievement.Visitor,
+    id: AchievementEnum.Visitor,
     title: 'Завсегдатай',
     description: 'награда за посещение приложения',
     points: [5, 10, 20, 30, 40, 50, 60, 70, 80, 90],
     rankPoints: [80, 170, 250, 320, 390, 440, 500, 570, 690, 800],
   }, {
-    id: Achievement.Correspondent,
+    id: AchievementEnum.Correspondent,
     title: 'Новостник',
     description: 'награда за подписку на главную группу Colizeum',
     rankPoints: [250],
   }, {
-    id: Achievement.LivingFullLife,
+    id: AchievementEnum.LivingFullLife,
     title: 'Живущий полной жизнью',
     description: 'награда за использование приветственного промо-кода',
     rankPoints: [160],
   }, {
-    id: Achievement.Warrior,
+    id: AchievementEnum.Warrior,
     title: 'Стойкий боец',
     description: 'награда за посещение приложения несколько дней подряд',
     points: [3, 14, 30, 45, 60, 75, 90, 120, 140, 180],
     rankPoints: [120, 210, 320, 430, 510, 590, 650, 720, 810, 900],
   }, {
-    id: Achievement.RichSoul,
+    id: AchievementEnum.RichSoul,
     title: 'Щедрая душа',
     description: 'расскажи друзьям о приложении на стене / в истории',
     rankPoints: [230],
   }, {
-    id: Achievement.BorderGuard,
+    id: AchievementEnum.BorderGuard,
     title: 'Чеканатор',
     description: 'награда за сканирование чеков из Colizeum',
     points: [5, 15, 30, 45, 60, 75, 90, 105, 120, 135],

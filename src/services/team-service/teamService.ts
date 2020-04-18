@@ -6,7 +6,7 @@ import Database, {Collection, TeamUser} from "../../db";
  * @param userId
  * @param targetUserId
  */
-export const tryJoinInTeam = async (db: Database, userId: number, targetUserId: number) => {
+export const joinTargetUser = async (db: Database, userId: number, targetUserId: number) => {
   const usersCollection = db.collection(Collection.Users);
   const teamsCollection = db.collection(Collection.Teams);
 
@@ -91,7 +91,7 @@ export const tryJoinInTeam = async (db: Database, userId: number, targetUserId: 
  * @param db
  * @param userId
  */
-export const deleteUserFromTeam = async (db: Database, userId: number) => {
+export const leaveTeam = async (db: Database, userId: number) => {
   const teamsCollection = await db.collection(Collection.Teams);
   const team = await teamsCollection.findOne({'users.id': userId});
 
@@ -130,6 +130,7 @@ export const searchMates = async (
 ) => {
   const usersCollection = db.collection(Collection.Users);
 
+  // TODO
   // Находим пользователей по запросу.
   const users = await usersCollection
     .find({
@@ -137,13 +138,13 @@ export const searchMates = async (
       'profile.city': city,
       'profile.games.id': {$in: gamesIds},
     })
-    .project({
+    /*.project({
       achievementsReceived: true,
       avatarUrl: true,
       id: true,
       profile: true,
       rank: true,
-    })
+    })*/
     .toArray();
 
   // Если пользователи не найдены, возвращаем пустой массив.
