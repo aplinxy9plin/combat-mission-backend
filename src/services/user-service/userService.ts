@@ -2,17 +2,13 @@ import {AchievementEnum, Collection, IAchievement, Profile, PromoCode, PromoCode
 import Database from '../../db/Database';
 import dayjs from "dayjs";
 import {formatUserWithPromo, generatePromoCode} from '../promocode-service';
-import {
-  checkIfUserIsBorderGuard,
-  checkIfUserLogsInSomeDayInRow,
-  checkIfUserReceivedUpgradeByTotalVisits, getUserRanks,
-} from "./utils";
+import {addPointsForAchievement, getUserRanks,} from "./utils";
 import * as utils from '../utils';
 import {decrypt} from "../../http/crypto";
-import {InputProfile} from "../../temp-bridge";
+import {checkAchievement} from "../achievement-service";
 
 /**
- * Получаем информацию о текущем пользователе, включая полученные промокоды
+ * Возвращаем информацию о текущем пользователе, включая полученные промокоды
  * @param db
  * @param userId
  */
@@ -29,9 +25,8 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
     }
   }
 
-  // TODO что-то придумать с тем, что массив в graphql не может состоять из union типов
   // Мы выдаем промо в зависимости того, был получен новый уровень или нет.
-  const receivedPromoCodes: string[] | null = [];//: Array<'warrior' | 'visitor'> = [];
+  const receivedPromoCodes: Array<'warrior' | 'visitor'> = [];
 
   const lastFixedVisit = dayjs(foundUser.lastFixedVisitDate);
   const now = dayjs();
@@ -55,13 +50,24 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
 
     // Проверяем, получил ли апгрейд по общему числу посещений.
     if (visitorAchievement && ranks) {
-      checkIfUserReceivedUpgradeByTotalVisits(foundUser, receivedPromoCodes, visitorAchievement, ranks);
+      const checkAchievementResult = checkAchievement(visitorAchievement, visitsCount, nextVisitsCount);
+      addPointsForAchievement(foundUser, visitorAchievement, receivedPromoCodes, checkAchievementResult, ranks);
     }
 
     // Если есть разница в 1 день, значит пользователь заходит какой-то день
     // подряд. С этим есть связанные ачивки.
     if (diff === 1) {
-      checkIfUserLogsInSomeDayInRow(foundUser, receivedPromoCodes, warriorAchievement, ranks);
+      foundUser.visitsInRow++;
+      const prevAchievementVisits = achievementsProgress[Warrior] || 0;
+
+      if (prevAchievementVisits < foundUser.visitsInRow) {
+        achievementsProgress[Warrior] = foundUser.visitsInRow;
+      }
+
+      if (warriorAchievement && warriorAchievement.points) {
+        const checkAchievementResult = checkAchievement(warriorAchievement, prevAchievementVisits, foundUser.visitsInRow);
+        addPointsForAchievement(foundUser, warriorAchievement, receivedPromoCodes, checkAchievementResult, ranks);
+      }
     }
     // Если разница больше чем в 1 день, значит дропаем стрик.
     else {
@@ -70,10 +76,9 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
 
     await usersCollection.updateOne({id: userId}, {$set: foundUser});
   }
-  // TODO сделать поле PromoCodes интерфейсом в схеме graphql
-  //const formattedUser = formatUserWithPromo(foundUser);
+
   return {
-    user: foundUser,
+    user: formatUserWithPromo(foundUser),
     receivedPromoCodes,
   };
 };
@@ -85,10 +90,10 @@ export const getCurrentUserInfo = async (db: Database, userId: number) => {
  * @param userId
  */
 export const activateCheck = async (check: string, db: Database, userId: number) => {
-  // Расшифровываем чек.
-  const decrypted = decrypt(check);
-
   try {
+    // Расшифровываем чек.
+    const decrypted = decrypt(check);
+
     const content = JSON.parse(decrypted);
 
     if (utils.isObject(content)! || utils.isString(content.payload)!) {
@@ -127,21 +132,31 @@ export const activateCheck = async (check: string, db: Database, userId: number)
     let promoReceived = false;
 
     if (foundUser && achievements) {
-      const {BorderGuard} = AchievementEnum;
-      const borderGuardAchievement = achievements.find(a => a.id === BorderGuard);
+      const achievement = achievements.find(a => a.id === AchievementEnum.BorderGuard);
+      if (achievement) {
+        const points = foundUser.achievementsProgress[AchievementEnum.BorderGuard] || 0;
+        const nextPoints = points + 1;
+        const {addToReceivedRequired, levelUpgrade, pointsToAdd} = checkAchievement(achievement, points, nextPoints);
 
-      if (borderGuardAchievement) {
-        checkIfUserIsBorderGuard(foundUser, borderGuardAchievement, payload, promoReceived);
-        // Ставим метку о том что чек уже активирован.
+        foundUser.points += pointsToAdd;
+        foundUser.achievementsProgress[AchievementEnum.BorderGuard] = nextPoints;
+        foundUser.activatedChecks.push(payload);
+
+        if (levelUpgrade) {
+          foundUser.promoCodes.push(generatePromoCode(PromoCodeType.Discount20VipFrom2Hours));
+          promoReceived = true;
+        }
+        if (addToReceivedRequired) {
+          foundUser.achievementsReceived.push(achievement);
+        }
         await usersCollection.updateOne({id: userId}, {$set: foundUser});
       }
     }
 
-    // TODO
     return {
       message: 'Чек успешно активирован.',
       activated: true,
-      user: foundUser ? foundUser : null,//formatUserWithPromo(foundUser) : null,
+      user: foundUser ? formatUserWithPromo(foundUser) : null,
       promoReceived,
     };
   } catch (e) {
@@ -156,20 +171,21 @@ export const activateCheck = async (check: string, db: Database, userId: number)
 };
 
 /**
- * Сохраняет профиль пользователя
+ * Сохраняем профиль пользователя
  * @param profile
  * @param db
  * @param userId
  */
-export const saveProfile = async (profile: InputProfile, db: Database, userId: number) => {
+export const saveProfile = async (profile: any, db: Database, userId: number) => {
   const [games, stages] = await Promise.all([
     db.collection(Collection.Games).find({}).toArray(),
     db.collection(Collection.Stages).find({}).toArray(),
   ]);
   const foundGames = games.filter(g => profile.gamesIds.includes(g.id));
   const foundStage = stages.find(s => s.id === profile.stageId);
+  let foundUser = await db.collection(Collection.Users).findOne({id: userId});
 
-  if (foundGames.length === 0 || !foundStage) {
+  if (foundGames.length === 0 || !foundStage || !foundUser) {
     return {
       error: {
         code: 400,
@@ -188,19 +204,18 @@ export const saveProfile = async (profile: InputProfile, db: Database, userId: n
     stage: foundStage,
   };
   // Обновляем профиль.
-  await db.collection(Collection.Users).updateOne({id: userId}, {$set: {userProfile}});
+  await db.collection(Collection.Users).updateOne({id: userId}, {$set: {profile: userProfile}});
 
   // Возвращаем информацию о пользователе с профилем.
-  const foundUser = await db.collection(Collection.Users).findOne(
+  foundUser = await db.collection(Collection.Users).findOne(
     {id: userId},
     {projection: {profile: true}},
   );
-
-  return foundUser ? foundUser.profile : null;
+  return !foundUser ? null : foundUser.profile;
 };
 
 /**
- * Удаляет профиль пользователя
+ * Удаляем профиль пользователя
  * @param db
  * @param userId
  */
@@ -210,7 +225,7 @@ export const deleteProfile = async (db: Database, userId: number) => {
 };
 
 /**
- * Получаем команду, в которой состоит пользователь
+ * Возвращаем команду, в которой состоит пользователь
  * @param db
  * @param userId
  */
@@ -222,13 +237,12 @@ export const getUserTeam = async (db: Database, userId: number) => {
 };
 
 /**
- * Получаем пользователя
+ * Возвращаем пользователя
  * @param db
  * @param userId
  */
 export const getUser = async (db: Database, userId: number) => {
-  // TODO
-  return await db.collection(Collection.Users).findOne({id: userId}/*, {
+  return await db.collection(Collection.Users).findOne({id: userId}, {
     projection: {
       achievementsReceived: true,
       avatarUrl: true,
@@ -236,7 +250,7 @@ export const getUser = async (db: Database, userId: number) => {
       profile: true,
       rank: true,
     },
-  }*/);
+  });
 };
 
 /**
@@ -250,6 +264,7 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
   let foundUser = await usersCollection.findOne({id: userId});
 
   let promoCode: PromoCode | null = null;
+  let newbiePromoReceived = false;
 
   if (!foundUser) {
     const ranks = await db.collection(Collection.Ranks).find({}).toArray();
@@ -257,6 +272,7 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
 
     // Даем промокод за первое посещение приложения.
     promoCode = generatePromoCode(PromoCodeType.Discount20VipFrom2Hours);
+    newbiePromoReceived = true;
     foundUser = {
       achievementsReceived: [],
       achievementsProgress: {
@@ -289,13 +305,13 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
   }
 
   return {
-    user: foundUser,
-    newbiePromoReceived: true,
+    user: formatUserWithPromo(foundUser),
+    newbiePromoReceived,
   };
 };
 
 /**
- * Получаем справочники и прочие данные для анкеты
+ * Возвращаем справочники и прочие данные для анкеты
  * @param db
  */
 export const getProfileMeta = async (db: Database) => {

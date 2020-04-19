@@ -1,10 +1,9 @@
-import {AchievementEnum, Collection, IAchievement, PromoCodeType, User} from '../../db';
-import {Rank} from "../../db";
-import {checkAchievement} from "../achievement-service";
+import {AchievementEnum, IAchievement, PromoCodeType, Rank, User} from '../../db';
+import {ICheckAchievementResult} from "../achievement-service";
 import {generatePromoCode} from "../promocode-service";
 
 /**
- * Возвращает ранги пользователя.
+ * Возвращаем ранги пользователя.
  * @param points
  * @param ranks
  */
@@ -28,112 +27,42 @@ export const getUserRanks = (points: number, ranks: Rank[]) => {
   );
 };
 
-export const checkIfUserReceivedUpgradeByTotalVisits = (
-  foundUser: User,
-  receivedPromoCodes: string[],//Array<'warrior' | 'visitor'>,
-  visitorAchievement: IAchievement,
-  ranks: Rank[]
+/**
+ * Добавляем очки за достижение, генерим промокод
+ * @param user
+ * @param achievement
+ * @param receivedPromoCodes
+ * @param checkAchievementResult
+ * @param ranks
+ */
+export const addPointsForAchievement = (
+  user: User,
+  achievement: IAchievement,
+  receivedPromoCodes: Array<'warrior' | 'visitor'>,
+  checkAchievementResult: ICheckAchievementResult,
+  ranks: Rank[],
 ) => {
-  const {achievementsProgress, achievementsReceived} = foundUser;
-  const {Visitor} = AchievementEnum;
-  const {Discount20VipFrom2Hours} = PromoCodeType;
-  const visitsCount = achievementsProgress[Visitor] || 1;
-  const nextVisitsCount = visitsCount + 1;
-  // Проверяем, получил ли апгрейд по общему числу посещений.
-  if (visitorAchievement && ranks) {
-    const {
-      addToReceivedRequired, levelUpgrade, pointsToAdd,
-    } = checkAchievement(
-      visitorAchievement, visitsCount, nextVisitsCount,
-    );
-    if (addToReceivedRequired) {
-      achievementsReceived.push(visitorAchievement);
-    }
-    if (levelUpgrade) {
-      receivedPromoCodes.push('visitor');
-      foundUser.promoCodes.push(generatePromoCode(Discount20VipFrom2Hours));
-    }
-    if (pointsToAdd > 0) {
-      foundUser.points += pointsToAdd;
-      const {rank, nextRank} = getUserRanks(foundUser.points, ranks);
-      if (rank) {
-        foundUser.rank = rank;
-      }
-      if (nextRank) {
-        foundUser.nextRank = nextRank;
-      }
-    }
-  }
-};
-
-export const checkIfUserLogsInSomeDayInRow = (
-  foundUser: User,
-  receivedPromoCodes: string[],//Array<"warrior" | "visitor">,
-  warriorAchievement: IAchievement | undefined,
-  ranks: Rank[]
-) => {
-  const {achievementsProgress, achievementsReceived} = foundUser;
-  const {Warrior} = AchievementEnum;
-  const {Discount20VipFrom2Hours} = PromoCodeType;
-  foundUser.visitsInRow++;
-  const prevAchievementVisits = achievementsProgress[Warrior] || 0;
-
-  if (prevAchievementVisits < foundUser.visitsInRow) {
-    achievementsProgress[Warrior] = foundUser.visitsInRow;
-  }
-
-  if (warriorAchievement && warriorAchievement.points) {
-    const {
-      addToReceivedRequired, levelUpgrade, pointsToAdd,
-    } = checkAchievement(
-      warriorAchievement,
-      prevAchievementVisits,
-      foundUser.visitsInRow,
-    );
-    if (addToReceivedRequired) {
-      achievementsReceived.push(warriorAchievement);
-    }
-    if (levelUpgrade) {
-      receivedPromoCodes.push('warrior');
-      foundUser.promoCodes.push(generatePromoCode(Discount20VipFrom2Hours));
-    }
-    if (pointsToAdd > 0) {
-      foundUser.points += pointsToAdd;
-      const {rank, nextRank} = getUserRanks(foundUser.points, ranks);
-      if (rank) {
-        foundUser.rank = rank;
-      }
-      if (nextRank) {
-        foundUser.nextRank = nextRank;
-      }
-    }
-  }
-};
-
-export const checkIfUserIsBorderGuard = (
-  foundUser: User,
-  borderGuardAchievement: IAchievement,
-  payload: string,
-  promoReceived: boolean
-) => {
-  const {BorderGuard} = AchievementEnum;
-  const {Discount20VipFrom2Hours} = PromoCodeType;
-
-  const points = foundUser.achievementsProgress[BorderGuard] || 0;
-  const nextPoints = points + 1;
-  const {
-    addToReceivedRequired, pointsToAdd, levelUpgrade,
-  } = checkAchievement(borderGuardAchievement, points, nextPoints);
-  foundUser.points += pointsToAdd;
-  foundUser.achievementsProgress[BorderGuard] = nextPoints;
-  foundUser.activatedChecks.push(payload);
-
-  if (levelUpgrade) {
-    const promoCode = generatePromoCode(Discount20VipFrom2Hours);
-    promoReceived = true;
-    foundUser.promoCodes.push(promoCode);
-  }
+  const {addToReceivedRequired, levelUpgrade, pointsToAdd} = checkAchievementResult;
   if (addToReceivedRequired) {
-    foundUser.achievementsReceived.push(borderGuardAchievement);
+    user.achievementsReceived.push(achievement);
+  }
+  if (levelUpgrade) {
+    if (achievement.id === AchievementEnum.Visitor) {
+      receivedPromoCodes.push('visitor');
+    }
+    if (achievement.id === AchievementEnum.Warrior) {
+      receivedPromoCodes.push('warrior');
+    }
+    user.promoCodes.push(generatePromoCode(PromoCodeType.Discount20VipFrom2Hours));
+  }
+  if (pointsToAdd > 0) {
+    user.points += pointsToAdd;
+    const {rank, nextRank} = getUserRanks(user.points, ranks);
+    if (rank) {
+      user.rank = rank;
+    }
+    if (nextRank) {
+      user.nextRank = nextRank;
+    }
   }
 };
