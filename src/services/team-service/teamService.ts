@@ -110,9 +110,7 @@ export const leaveTeam = async (db: Database, userId: number) => {
     }
   }
 
-  return {
-    data: true,
-  }
+  return true;
 };
 
 /**
@@ -130,7 +128,6 @@ export const searchMates = async (
 ) => {
   const usersCollection = db.collection(Collection.Users);
 
-  // TODO
   // Находим пользователей по запросу.
   const users = await usersCollection
     .find({
@@ -138,18 +135,18 @@ export const searchMates = async (
       'profile.city': city,
       'profile.games.id': {$in: gamesIds},
     })
-    /*.project({
+    .project({
       achievementsReceived: true,
       avatarUrl: true,
       id: true,
       profile: true,
       rank: true,
-    })*/
+    })
     .toArray();
 
-  // Если пользователи не найдены, возвращаем пустой массив.
+  // Если пользователи не найдены, возвращаем null.
   if (users.length === 0) {
-    return [];
+    return null;
   }
 
   // Находим команды пользователей и оставляем только тех, кто находится не в

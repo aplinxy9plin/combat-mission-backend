@@ -11,7 +11,7 @@ const titleMap: Record<PromoCodeType, string> = {
 };
 
 /**
- * Генерирует промокод указанного типа.
+ * Генерируем промокод указанного типа.
  */
 export const generatePromoCode = (type: PromoCodeType): PromoCode => {
   return {
@@ -25,21 +25,23 @@ export const generatePromoCode = (type: PromoCodeType): PromoCode => {
 };
 
 /**
- * Форматирует код для вывода пользователю
+ * Форматируем промокод для вывода пользователю
  * @param {PromoCode} code
  * @returns {UserPromoCode}
  */
 export const formatPromoCode = (code: PromoCode): UserPromoCode => {
   const {id, type, expiresAt, title, openedAt} = code;
 
+  // Возвращаем UserOpenedPromoCode.
   if (openedAt) {
     return code;
   }
+  // Возвращаем UserClosedPromoCode.
   return {id, type, expiresAt, title, openedAt};
 };
 
 /**
- * Форматирует пользователя оставляя только те промокоды, которые сейчас активны
+ * Форматируем пользователя оставляя только те промокоды, которые сейчас активны
  * @param {User} user
  * @returns {User}
  */
@@ -56,7 +58,7 @@ export const formatUserWithPromo = (user: User) => {
 };
 
 /**
- * Активировать промокод пользователя
+ * Активируем промокод пользователя
  * @param db
  * @param userId
  * @param promoCodeId
@@ -98,6 +100,6 @@ export const openPromoCode = async (db: Database, userId: number, promoCodeId: s
       },
     );
   }
-  // TODO
-  return promo;//formatPromoCode(promo);
+
+  return formatPromoCode(promo);
 };

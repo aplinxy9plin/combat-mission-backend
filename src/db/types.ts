@@ -75,7 +75,7 @@ export interface PromoCode {
   expiresAt: Date;
 }
 
-export type UserPromoCode = UserClosedPromoCode | UserOpenedPromoCode;
+export type UserPromoCode = UserOpenedPromoCode | UserClosedPromoCode;
 
 export type Game = IdTitlePair;
 export type Stage = IdTitlePair;
@@ -103,14 +103,6 @@ export interface User {
   lastFixedVisitDate: number;
   nextRank: Rank | null;
   visitsInRow: number;
-}
-
-export interface UserTest {
-  achievementsReceived: IAchievement[];
-  avatarUrl: string | null;
-  id: number;
-  profile: Profile | null;
-  rank: Rank | null;
 }
 
 export interface TeamUser {
