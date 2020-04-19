@@ -1,12 +1,12 @@
 import {Resolver} from "apollo-resolvers";
-import {ReceivedPromoCode} from 'combat-mission-bridge'
 import {AuthenticatedContext} from "../types";
 import {isError, errorCodeMapper, BadRequestError, MappingError} from '../errors';
 import * as userService from '../../services/user-service';
 import {createError} from "../utils/apollo";
-import {mapUser} from "../../services/mapper";
+import {mapUser, mapReceivedPromoCodes} from "../../services/mapper";
 import * as utils from '../../services/utils';
 import {User} from "../../db";
+import {isEmptyArray} from "../../services/utils";
 
 export const getCurrentUser = (baseResolver: Resolver<object>) => baseResolver.createResolver(
   async (root: any, args: any, context: AuthenticatedContext) => {
@@ -16,17 +16,14 @@ export const getCurrentUser = (baseResolver: Resolver<object>) => baseResolver.c
       const error = createError(errorCodeMapper[data.error.code], data.error.message);
       throw new error();
     }
-    const receivedPromoCodesInGql: ReceivedPromoCode[] = [];
-    data.receivedPromoCodes.map(x => {
-      receivedPromoCodesInGql.push((x as ReceivedPromoCode));
-    });
     const mappedUser = mapUser((data.user as User));
+    const receivedPromoCodes: Array<'warrior' | 'visitor'> = data.receivedPromoCodes;
     if (utils.isUser(mappedUser)) {
       throw new MappingError();
     }
     return {
       user: mappedUser,
-      receivedPromoCodes: receivedPromoCodesInGql,
+      receivedPromoCodes: isEmptyArray(receivedPromoCodes) ? [] : mapReceivedPromoCodes(receivedPromoCodes)
     };
   }
 );
