@@ -1,6 +1,7 @@
 import {
   AchievementEnum as GqlAchievement,
   PromoCodeType as GqlPromoCodeType,
+  ReceivedPromoCode,
   User as GqlUser,
   UserPromoCode as GqlPromoCode,
 } from 'combat-mission-bridge';
@@ -19,6 +20,16 @@ export const mapPromoCode = (promoCode: PromoCode | UserPromoCode) => {
     expiresAt: expiresAt.toISOString(),
     ...rest,
   }
+};
+
+/**
+ * Маппим достижения, за которые были получены промокоды в массив Enum`ов из graphql
+ * @param receivedPromoCodes
+ */
+export const mapReceivedPromoCodes = (receivedPromoCodes: Array<'warrior'| 'visitor'>) => {
+  const mappedReceivedPromoCodes: ReceivedPromoCode[] = [];
+  receivedPromoCodes.forEach(x => mappedReceivedPromoCodes.push(x as ReceivedPromoCode));
+  return mappedReceivedPromoCodes;
 };
 
 /**
