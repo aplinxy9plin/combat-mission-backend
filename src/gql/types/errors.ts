@@ -4,6 +4,9 @@
 export enum ApolloError {
   Authorization = 'AuthorizationError',
   Unknown = 'UnknownError',
+  NotFound = 'NotFoundError',
+  BadRequest = 'BadRequestError',
+  Mapping = 'MappingError',
 }
 
 export type Error = {
@@ -13,6 +16,10 @@ export type Error = {
   };
 }
 
-export const isError = (item: any): item is Error => {
-  return item.hasOwnProperty('error');
-};
+export type CheckActivationError = {
+  error: {
+    code: number;
+    message: string;
+    activated: boolean;
+  };
+}
