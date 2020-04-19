@@ -264,7 +264,6 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
   let foundUser = await usersCollection.findOne({id: userId});
 
   let promoCode: PromoCode | null = null;
-  let newbiePromoReceived = false;
 
   if (!foundUser) {
     const ranks = await db.collection(Collection.Ranks).find({}).toArray();
@@ -272,7 +271,6 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
 
     // Даем промокод за первое посещение приложения.
     promoCode = generatePromoCode(PromoCodeType.Discount20VipFrom2Hours);
-    newbiePromoReceived = true;
     foundUser = {
       achievementsReceived: [],
       achievementsProgress: {
@@ -306,7 +304,7 @@ export const registerUser = async (db: Database, userId: number, avatarUrl: stri
 
   return {
     user: formatUserWithPromo(foundUser),
-    newbiePromoReceived,
+    newbiePromoReceived: true,
   };
 };
 

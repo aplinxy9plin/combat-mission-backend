@@ -1,5 +1,5 @@
 import Database, {AchievementEnum, Collection, IAchievement, PromoCodeType} from '../../db';
-import {generatePromoCode} from "../promocode-service";
+import {formatUserWithPromo, generatePromoCode} from "../promocode-service";
 import {getUserRanks} from "../user-service/utils";
 
 export interface ICheckAchievementResult {
@@ -119,7 +119,7 @@ export const processAchievement = async (db: Database, achievementId: Achievemen
     }
   }
   return {
-    user: !foundUser ? null : foundUser,
+    user: !foundUser ? null : formatUserWithPromo(foundUser),
     promoReceived,
   }
 };
