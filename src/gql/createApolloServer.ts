@@ -1,29 +1,15 @@
 import {ApolloServer} from 'apollo-server-express';
-import {and} from 'apollo-resolvers';
 import {
   schema,
   Query,
   Mutation,
-  User as GqlUser,
 } from "combat-mission-bridge";
-import {Context, RootTypeResolvers, SubscriptionTypeResolvers, isError} from './types';
+import {AuthenticatedContext, Context, RootTypeResolvers} from './types';
 import Database from '../db/Database';
+import {withSignValidation} from "./middlewares/withSignValidation";
+import {withDatabase} from "./middlewares/withDatabase";
 import config from '../config';
-import * as achievementService from '../services/achievement-service';
-import * as userService from '../services/user-service';
-import * as teamService from '../services/team-service';
-import * as promoCodeService from '../services/promocode-service';
-import {AchievementEnum, UserTest} from "../db";
-import {mapUser} from "../services/mapper";
-import {UnknownError} from "./errors";
-import * as utils from '../services/utils';
-import * as usersResolvers from "./resolvers/usersResolvers";
-import * as teamsResolvers from './resolvers/teamsResolvers';
-import * as achievementsResolvers from './resolvers/achievementsResolvers';
-import {withSignValidation, withDatabase, withSignValidationAndDb} from "./middlewares";
-
-type TestQuery = {};
-type TestMutation = {};
+import * as resolvers from './resolvers';
 
 /**
  * Creates ApolloServer
@@ -31,31 +17,25 @@ type TestMutation = {};
  * @returns {ApolloServer}
  */
 export function createApolloServer(db: Database) {
+  const middlewares = withSignValidation.createResolver(withDatabase(db));
   const Query: RootTypeResolvers<Query> = {
-    currentUser: withSignValidationAndDb(db).createResolver(usersResolvers.getCurrentUser),
-    userTeam: withSignValidationAndDb(db).createResolver(usersResolvers.getUserTeam),
-    user: withSignValidationAndDb(db).createResolver(usersResolvers.getUser),
-    profileMeta: withSignValidationAndDb(db).createResolver(usersResolvers.getProfileMeta),
-    mates: withSignValidationAndDb(db).createResolver(teamsResolvers.searchMates),
-    achievements: withSignValidationAndDb(db).createResolver(achievementsResolvers.getAchievements),
+    currentUser: resolvers.getCurrentUser(middlewares),
+    userTeam: resolvers.getUserTeam(middlewares),
+    user: resolvers.getUser(middlewares),
+    profileMeta: resolvers.getProfileMeta(middlewares),
+    mates: resolvers.searchMates(middlewares),
+    achievements: resolvers.getAchievements(middlewares),
   };
-  const Mutation: RootTypeResolvers<TestMutation> = {
-    activateCheck: withSignValidationAndDb(db).createResolver(usersResolvers.activateCheck),
-    saveProfile: withSignValidationAndDb(db).createResolver(usersResolvers.saveProfile),
-    deleteProfile: withSignValidationAndDb(db).createResolver(usersResolvers.deleteProfile),
-    registerUser: withSignValidationAndDb(db).createResolver(usersResolvers.registerUser),
-    joinTargetUser: withSignValidationAndDb(db).createResolver(teamsResolvers.joinTargetUser),
-    leaveTeam: withSignValidationAndDb(db).createResolver(teamsResolvers.leaveTeam),
-    // TODO возвращаемый тип должен быть UserPromoCode
-    /*openPromoCode: withDatabase(db).createResolver(
-      async (root, args, context: Context) => {
-        const result = await promoCodeService.openPromoCode(db, 1, args.promoCodeId);
-        if (isError(result)) {
-          throw new UnknownError();
-        }
-        return result;
-      }
-    )*/
+  const Mutation: RootTypeResolvers<Mutation> = {
+    activateCheck: resolvers.activateCheck(middlewares),
+    saveProfile: resolvers.saveProfile(middlewares),
+    deleteProfile: resolvers.deleteProfile(middlewares),
+    registerUser: resolvers.registerUser(middlewares),
+    joinTargetUser: resolvers.joinTargetUser(middlewares),
+    leaveTeam: resolvers.leaveTeam(middlewares),
+    openPromoCode: resolvers.openPromoCode(middlewares),
+    getAchievementForPostSharing: resolvers.getAchievementForPostSharing(middlewares),
+    getAchievementForGroupSubscription: resolvers.getAchievementForGroupSubscription(middlewares)
   };
 
   return new ApolloServer({
@@ -76,6 +56,14 @@ export function createApolloServer(db: Database) {
       },
       PromoCodeType: {
         Discount20VipFrom2Hours: 'discount 20 percents in VIP if duration more than 2 hrs',
+      },
+      UserPromoCode: {
+        __resolveType(obj: any, context: AuthenticatedContext, info: any) {
+          if (obj.value) {
+            return 'UserOpenedPromoCode';
+          }
+          return 'UserClosedPromoCode';
+        }
       }
     },
   });
