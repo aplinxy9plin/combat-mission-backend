@@ -1,4 +1,4 @@
-import {AuthenticatedContext, Context} from '../types';
+import {AuthenticatedContext} from '../types';
 import {isSignValid} from '../../http/utils';
 import {AuthorizationError} from '../errors';
 import {withErrorCatch} from "./withErrorCatch";
@@ -9,11 +9,7 @@ import {withErrorCatch} from "./withErrorCatch";
  */
 export const withSignValidation = withErrorCatch.createResolver(
 (root: object, args: object, context: AuthenticatedContext) => {
-  context.res.locals.user = {
-    id: 4
-  };
-  return root;
-  /*const {req} = context;
+  const {req} = context;
   const params = req.header('X-Launch-params');
 
   if (typeof params === 'string') {
@@ -24,6 +20,6 @@ export const withSignValidation = withErrorCatch.createResolver(
       return root;
     }
   }
-  throw new AuthorizationError();*/
+  throw new AuthorizationError();
   },
 );

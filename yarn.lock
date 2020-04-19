@@ -973,7 +973,7 @@ color-name@~1.1.4:
 
 combat-mission-bridge@yungKillaGit/combat-mission-bridge:
   version "1.0.0"
-  resolved "https://codeload.github.com/yungKillaGit/combat-mission-bridge/tar.gz/e8671b8f18e5a6cad451939561dc3a8a24042fd3"
+  resolved "https://codeload.github.com/yungKillaGit/combat-mission-bridge/tar.gz/6784416e51231282212a9b60be02ecf52790935e"
   dependencies:
     gql-types-generator "^1.4.10"
 
