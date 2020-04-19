@@ -1,11 +1,9 @@
+import {Resolver} from "apollo-resolvers";
 import {AuthenticatedContext} from "../types";
-import {isError, errorCodeMapper, BadRequestError, MappingError} from '../errors';
+import {isError, errorCodeMapper, BadRequestError} from '../errors';
 import * as teamService from '../../services/team-service';
 import {createError} from "../utils/apollo";
-import {mapUser} from "../../services/mapper";
 import * as utils from '../../services/utils';
-import {User} from "../../db";
-import {Resolver} from "apollo-resolvers";
 
 export const searchMates = (baseResolver: Resolver<object>) => baseResolver.createResolver(
   (root: any, args: any, context: AuthenticatedContext) => {

@@ -9,7 +9,6 @@ import {withErrorCatch} from "./withErrorCatch";
  */
 export const withSignValidation = withErrorCatch.createResolver(
 (root: object, args: object, context: AuthenticatedContext) => {
-  console.log(context.req.header('check'));
   context.res.locals.user = {
     id: 4
   };

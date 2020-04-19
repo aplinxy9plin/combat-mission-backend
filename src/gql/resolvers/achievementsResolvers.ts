@@ -1,10 +1,10 @@
+import {Resolver} from "apollo-resolvers";
 import * as achievementService from '../../services/achievement-service';
 import {AuthenticatedContext} from "../types";
 import {mapUser} from "../../services/mapper";
 import {User} from "../../db";
 import * as utils from '../../services/utils';
 import {MappingError} from "../errors";
-import {Resolver} from "apollo-resolvers";
 
 export const getAchievements = (baseResolver: Resolver<object>) => baseResolver.createResolver(
   (root: any, args: any, context: AuthenticatedContext) => {

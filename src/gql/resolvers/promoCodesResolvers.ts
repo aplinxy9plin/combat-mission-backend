@@ -1,11 +1,10 @@
+import {Resolver} from "apollo-resolvers";
 import * as promoCodeService from '../../services/promocode-service';
 import * as utils from '../../services/utils';
 import {AuthenticatedContext} from "../types";
 import {BadRequestError, errorCodeMapper, isError} from "../errors";
 import {createError} from "../utils/apollo";
-import {isOpenedPromoCode, PromoCode, UserPromoCode} from "../../db";
 import {mapPromoCode} from "../../services/mapper";
-import {Resolver} from "apollo-resolvers";
 
 export const openPromoCode = (baseResolver: Resolver<object>) => baseResolver.createResolver(
   (root: any, args: any, context: AuthenticatedContext) => {

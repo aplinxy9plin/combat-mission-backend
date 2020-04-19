@@ -1,12 +1,12 @@
-import {ReceivedPromoCode, User as GqlUser} from 'combat-mission-bridge'
+import {Resolver} from "apollo-resolvers";
+import {ReceivedPromoCode} from 'combat-mission-bridge'
 import {AuthenticatedContext} from "../types";
 import {isError, errorCodeMapper, BadRequestError, isCheckActivationError, MappingError} from '../errors';
 import * as userService from '../../services/user-service';
 import {createError} from "../utils/apollo";
 import {mapUser} from "../../services/mapper";
 import * as utils from '../../services/utils';
-import {PromoCode, User} from "../../db";
-import {Resolver} from "apollo-resolvers";
+import {User} from "../../db";
 
 export const getCurrentUser = (baseResolver: Resolver<object>) => baseResolver.createResolver(
   async (root: any, args: any, context: AuthenticatedContext) => {
