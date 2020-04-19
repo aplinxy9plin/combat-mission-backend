@@ -15,11 +15,3 @@ export type Error = {
     message: string;
   };
 }
-
-export type CheckActivationError = {
-  error: {
-    code: number;
-    message: string;
-    activated: boolean;
-  };
-}

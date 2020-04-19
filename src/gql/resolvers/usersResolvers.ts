@@ -1,7 +1,7 @@
 import {Resolver} from "apollo-resolvers";
 import {ReceivedPromoCode} from 'combat-mission-bridge'
 import {AuthenticatedContext} from "../types";
-import {isError, errorCodeMapper, BadRequestError, isCheckActivationError, MappingError} from '../errors';
+import {isError, errorCodeMapper, BadRequestError, MappingError} from '../errors';
 import * as userService from '../../services/user-service';
 import {createError} from "../utils/apollo";
 import {mapUser} from "../../services/mapper";
@@ -73,8 +73,7 @@ export const activateCheck = (baseResolver: Resolver<object>) => baseResolver.cr
     }
     return userService.activateCheck(check, db, user.id)
       .then((data) => {
-        console.log(data);
-        if (isCheckActivationError(data)) {
+        if (isError(data)) {
           const error = createError(errorCodeMapper[data.error.code], data.error.message);
           throw new error();
         }

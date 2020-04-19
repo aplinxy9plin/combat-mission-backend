@@ -1,5 +1,5 @@
 import {createError} from './utils/apollo';
-import {ApolloError, CheckActivationError, Error} from './types';
+import {ApolloError, Error} from './types';
 
 export const AuthorizationError = createError(ApolloError.Authorization, 'Ошибка авторизации');
 export const UnknownError = createError(ApolloError.Unknown, 'Неизвестная ошибка');
@@ -11,10 +11,6 @@ export const getUnknownError = (errorMessage: string) => {
 };
 
 export const isError = (item: any): item is Error => {
-  return item.hasOwnProperty('error');
-};
-
-export const isCheckActivationError = (item: any): item is CheckActivationError => {
   return item.hasOwnProperty('error');
 };
 
