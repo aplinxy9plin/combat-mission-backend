@@ -37,7 +37,7 @@ export const isArrayContainsOnlyNumbers = (array: any[]): boolean => {
 };
 
 export const isUser = (value: any): value is User => {
-  return value.hasOwnProperty('profile');
+  return value.hasOwnProperty('achievementsProgress') && !Array.isArray(value.achievementsProgress);
 };
 
 export const isObject = (value: any): boolean => {
